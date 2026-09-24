@@ -4,7 +4,7 @@
 
 @layer base {
   html, body {
-    @apply h-full w-full overflow-hidden bg-slate-950 text-slate-100;
+    @apply w-full min-h-full bg-slate-950 text-slate-100;
     margin: 0;
     padding: 0;
   }
