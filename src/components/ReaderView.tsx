@@ -50,19 +50,26 @@ export const ReaderView = forwardRef<HTMLDivElement, ReaderViewProps>(({
                 {paragraph.sentences.map((sentence: SentenceItem) => {
                   const isCurrent = sentence.globalIndex === currentSentenceIndex;
                   const isPast = sentence.globalIndex < currentSentenceIndex;
+                  const offset = sentence.globalIndex - currentSentenceIndex;
 
-                  // 严防排版抖动与换行突变：
-                  // 1. 严格锁定 font-normal，绝不因高亮切换字重导致字宽微扩引起整段重排
-                  // 2. 移除左右内边距与外边距，纯色彩/背景渲染
-                  // 3. 不向句尾注入空格字符，杜绝因空格产生的意外断行
+                  // 严防排版抖动与换行突变：统一锁定 font-normal，零内边距/外边距，纯色彩/背景渲染
                   let sentenceClass = 'transition-colors duration-150 inline cursor-pointer select-text font-normal rounded-sm ';
 
                   if (isCurrent) {
-                    sentenceClass += 'text-white bg-blue-600/35 [box-decoration-break:clone] -webkit-[box-decoration-break:clone]';
+                    // 当前句：高对比聚焦
+                    sentenceClass += 'text-white bg-blue-600/45 [box-decoration-break:clone] -webkit-[box-decoration-break:clone]';
+                  } else if (offset > 0 && offset <= 2) {
+                    // 紧跟的第 1、2 句：前瞻高亮区，彻底避免超前阅读未高亮内容
+                    sentenceClass += 'text-slate-100 bg-blue-500/25 [box-decoration-break:clone] -webkit-[box-decoration-break:clone]';
+                  } else if (offset === 3) {
+                    // 之后第 3 句：轻度柔和前瞻高亮
+                    sentenceClass += 'text-slate-200 bg-blue-500/15 [box-decoration-break:clone] -webkit-[box-decoration-break:clone]';
                   } else if (isPast) {
+                    // 历史已读句：低亮沉底
                     sentenceClass += 'text-slate-500 hover:text-slate-400 bg-transparent';
                   } else {
-                    sentenceClass += 'text-slate-200/90 hover:text-white bg-transparent';
+                    // 远端未来句：常态预备
+                    sentenceClass += 'text-slate-400/80 hover:text-white bg-transparent';
                   }
 
                   return (
