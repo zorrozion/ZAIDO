@@ -58,18 +58,15 @@ export const ReaderView = forwardRef<HTMLDivElement, ReaderViewProps>(({
                   if (isCurrent) {
                     // 当前句：高对比聚焦
                     sentenceClass += 'text-white bg-blue-600/45 [box-decoration-break:clone] -webkit-[box-decoration-break:clone]';
-                  } else if (offset > 0 && offset <= 2) {
-                    // 紧跟的第 1、2 句：前瞻高亮区，彻底避免超前阅读未高亮内容
-                    sentenceClass += 'text-slate-100 bg-blue-500/25 [box-decoration-break:clone] -webkit-[box-decoration-break:clone]';
-                  } else if (offset === 3) {
-                    // 之后第 3 句：轻度柔和前瞻高亮
-                    sentenceClass += 'text-slate-200 bg-blue-500/15 [box-decoration-break:clone] -webkit-[box-decoration-break:clone]';
+                  } else if (offset >= 1 && offset <= 3) {
+                    // 随后的第 1、2、3 句：统一前瞻高亮区
+                    sentenceClass += 'text-white bg-blue-500/25 [box-decoration-break:clone] -webkit-[box-decoration-break:clone]';
                   } else if (isPast) {
-                    // 历史已读句：低亮沉底
+                    // 历史已读句：沉底弱化
                     sentenceClass += 'text-slate-500 hover:text-slate-400 bg-transparent';
                   } else {
-                    // 远端未来句：常态预备
-                    sentenceClass += 'text-slate-400/80 hover:text-white bg-transparent';
+                    // 远端未读句：完全纯白字，方便讲员跳段阅读
+                    sentenceClass += 'text-white hover:text-white bg-transparent';
                   }
 
                   return (
