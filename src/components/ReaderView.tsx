@@ -26,10 +26,10 @@ export const ReaderView = forwardRef<HTMLDivElement, ReaderViewProps>(({
         fontFamily: '"Microsoft YaHei", "PingFang SC", "Noto Sans CJK SC", -apple-system, sans-serif'
       }}
     >
-      {/* 视口上方 7% 黄金聚焦点参考线（仅保留纯线条，无文字） */}
+      {/* 视口上方 11% 黄金聚焦点参考线（仅保留纯线条，无文字） */}
       <div
         className="pointer-events-none fixed left-0 w-full z-10 border-t border-dashed border-blue-500/30"
-        style={{ top: isStatusBarVisible ? 'calc(2.75rem + 7%)' : '7%' }}
+        style={{ top: isStatusBarVisible ? 'calc(2.75rem + 11%)' : '11%' }}
       />
 
       <div className="w-full px-0 space-y-5 sm:space-y-7">

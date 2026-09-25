@@ -59,13 +59,13 @@ export const App: React.FC = () => {
     isPaused
   });
 
-  // 核心统一语音处理函数（同时接收真实 ASR 与模拟推流）
+  // 核心统一语音处理函数（同时接收真实 ASR 与模拟推流，区分实时临时 interim 与终态 final）
   const handleIncomingSpeech = useCallback(
-    (transcript: string) => {
+    (transcript: string, isFinal: boolean = true) => {
       if (isPaused || script.sentences.length === 0) return;
 
       setLastSpeechFragment(transcript);
-      const decision = matcherRef.current.processStep(transcript, script.sentences);
+      const decision = matcherRef.current.processStep(transcript, script.sentences, isFinal);
 
       setCurrentBufferDisplay(matcherRef.current.getBuffer());
       setLastMatchResult(decision.result);
@@ -79,7 +79,7 @@ export const App: React.FC = () => {
     [isPaused, script.sentences]
   );
 
-  // 真实浏览器 Web Speech API Hook
+  // 真实浏览器 Web Speech API Hook (实时 interim 驱动瞬间跳转，final 确认持久化)
   const {
     isSupported: isSpeechSupported,
     isListening,
@@ -87,8 +87,8 @@ export const App: React.FC = () => {
     startListening,
     stopListening
   } = useSpeechRecognition({
-    onInterimResult: (interim) => handleIncomingSpeech(interim),
-    onFinalResult: (final) => handleIncomingSpeech(final),
+    onInterimResult: (interim) => handleIncomingSpeech(interim, false),
+    onFinalResult: (final) => handleIncomingSpeech(final, true),
     onError: (err) => {
       console.warn('Speech error received:', err);
       setTrackingStatus('error');
@@ -107,7 +107,7 @@ export const App: React.FC = () => {
   } = useSpeechSimulator({
     sentences: script.sentences,
     currentIndex,
-    onSpeechChunk: (chunk) => handleIncomingSpeech(chunk)
+    onSpeechChunk: (chunk, isFinal) => handleIncomingSpeech(chunk, isFinal)
   });
 
   // 开始跟稿（演示模式）

@@ -27,6 +27,8 @@ export class VoiceFollowMatcher {
   private pendingCandidateHits: number = 0;
   private localFailCount: number = 0;
   private isGlobalMode: boolean = false;
+  private finalizedBuffer: string = '';
+  private interimSpeech: string = '';
   private speechBuffer: string = '';
 
   constructor(initialIndex: number = 0) {
@@ -48,17 +50,30 @@ export class VoiceFollowMatcher {
    * 清理语音缓冲区
    */
   public clearBuffer() {
+    this.finalizedBuffer = '';
+    this.interimSpeech = '';
     this.speechBuffer = '';
   }
 
   /**
-   * 追加新识别文本到环形缓冲区，并截取保留最新字符
+   * 追加新识别文本到双层环形缓冲区（实时分离 interim 与 final，防止累加错乱）
    */
-  public appendSpeech(rawSpeechText: string): string {
+  public appendSpeech(rawSpeechText: string, isFinal: boolean = true): string {
     const clean = normalizeText(rawSpeechText);
-    if (!clean) return this.speechBuffer;
+    if (isFinal) {
+      if (clean) {
+        this.finalizedBuffer += clean;
+        if (this.finalizedBuffer.length > MATCHER_CONFIG.MAX_SPEECH_BUFFER_LEN) {
+          this.finalizedBuffer = this.finalizedBuffer.slice(-MATCHER_CONFIG.MAX_SPEECH_BUFFER_LEN);
+        }
+      }
+      this.interimSpeech = '';
+    } else {
+      // 临时识别：随说话实时变动，不写入持久 finalized 队列
+      this.interimSpeech = clean;
+    }
 
-    this.speechBuffer += clean;
+    this.speechBuffer = this.finalizedBuffer + this.interimSpeech;
     if (this.speechBuffer.length > MATCHER_CONFIG.MAX_SPEECH_BUFFER_LEN) {
       this.speechBuffer = this.speechBuffer.slice(-MATCHER_CONFIG.MAX_SPEECH_BUFFER_LEN);
     }
@@ -77,14 +92,15 @@ export class VoiceFollowMatcher {
    */
   public processStep(
     newSpeechText: string,
-    sentences: SentenceItem[]
+    sentences: SentenceItem[],
+    isFinal: boolean = true
   ): MatcherDecision {
     if (sentences.length === 0) {
       return this.createEmptyDecision(0);
     }
 
     if (newSpeechText) {
-      this.appendSpeech(newSpeechText);
+      this.appendSpeech(newSpeechText, isFinal);
     }
 
     // 缓冲区字符不足 4 个字时暂不触发判定，避免微小噪音误判

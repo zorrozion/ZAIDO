@@ -137,6 +137,48 @@ export function computeContinuityScore(
 }
 
 /**
+ * 计算句子起始前缀在近期语音尾部的匹配度 (Prefix Match for Early Triggering)
+ * 允许在讲员刚读出下一句的前 3~8 个字时，系统立即先知先觉地高亮该句，
+ * 彻底消除“读完了才高亮”的滞后感。
+ */
+export function computePrefixOverlap(sentenceClean: string, speechBufferClean: string): number {
+  if (!sentenceClean || !speechBufferClean) return 0;
+  if (sentenceClean.length < 2 || speechBufferClean.length < 2) return 0;
+
+  // 截取句子前部的关键前缀（取前 4~10 个字，或前 35% 长度）
+  const prefixLen = Math.min(10, Math.max(4, Math.floor(sentenceClean.length * 0.35)));
+  const prefix = sentenceClean.slice(0, prefixLen);
+
+  // 重点检查近期语音的尾部（最近 30 个字）
+  const tailSpeech = speechBufferClean.slice(-30);
+
+  // 1. 若近期语音尾部直接包含完整前缀，满分
+  if (tailSpeech.includes(prefix)) {
+    return 1.0;
+  }
+
+  // 2. 检查更短的起始核心词（前 3~5 个字）
+  const shortPrefix = sentenceClean.slice(0, Math.min(5, Math.max(3, prefixLen - 2)));
+  if (shortPrefix.length >= 3 && tailSpeech.includes(shortPrefix)) {
+    return 0.88;
+  }
+
+  // 3. 2-gram 连续前缀命中率
+  const pBigrams = getBigrams(prefix);
+  if (pBigrams.size === 0) return 0;
+
+  const tBigrams = getBigrams(tailSpeech);
+  let matched = 0;
+  for (const [gram, count] of pBigrams.entries()) {
+    if (tBigrams.has(gram)) {
+      matched += Math.min(count, tBigrams.get(gram)!);
+    }
+  }
+
+  return Number((matched / pBigrams.size).toFixed(3));
+}
+
+/**
  * 综合多维打分
  */
 export function scoreCandidateSentence(
@@ -151,11 +193,19 @@ export function scoreCandidateSentence(
   const keywordScore = computeKeywordOverlap(candidate.keywords, cleanSpeech);
   const continuityScore = computeContinuityScore(candidate.globalIndex, currentIndex, isGlobalSearch);
 
+  // 前缀先验加速：若候选句是紧随的下一句 (currentIndex + 1)，赋予前缀高灵敏度检测
+  let effectiveTextScore = diceScore;
+  if (!isGlobalSearch && candidate.globalIndex === currentIndex + 1) {
+    const prefixScore = computePrefixOverlap(candidate.cleanText, cleanSpeech);
+    // 当讲员刚读出下一句的前几个字时，前缀匹配度迅速提升，让得分立即达到推进阈值
+    effectiveTextScore = Math.max(diceScore, prefixScore * 0.95);
+  }
+
   // 权重分配：文本相似度 0.50 + 关键词重合 0.25 + 连续性 0.25
-  const totalScore = (diceScore * 0.50) + (keywordScore * 0.25) + (continuityScore * 0.25);
+  const totalScore = (effectiveTextScore * 0.50) + (keywordScore * 0.25) + (continuityScore * 0.25);
 
   return {
-    diceScore: Number(diceScore.toFixed(3)),
+    diceScore: Number(effectiveTextScore.toFixed(3)),
     keywordScore: Number(keywordScore.toFixed(3)),
     continuityScore: Number(continuityScore.toFixed(3)),
     totalScore: Number(totalScore.toFixed(3))
