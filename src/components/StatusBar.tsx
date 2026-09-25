@@ -98,7 +98,10 @@ export const StatusBar: React.FC<StatusBarProps> = ({
   };
 
   return (
-    <header className="sticky top-0 z-40 w-full h-11 sm:h-12 bg-slate-900/95 backdrop-blur border-b border-slate-800/80 px-2.5 sm:px-6 flex items-center justify-between select-none">
+    <header
+      onTouchMove={(e) => e.stopPropagation()}
+      className="sticky top-0 z-40 w-full h-11 sm:h-12 bg-slate-900/95 backdrop-blur border-b border-slate-800/80 px-2.5 sm:px-6 flex items-center justify-between select-none touch-none overscroll-none"
+    >
       {/* 左侧：返回编辑与标题 */}
       <div className="flex items-center space-x-2 sm:space-x-3">
         <button

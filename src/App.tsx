@@ -12,6 +12,48 @@ import { DebugPanel } from './components/DebugPanel';
 import { SAMPLE_SERMON_SHORT } from './sampleData/sermons';
 import { MatchResult, TrackingStatus } from './types/speech';
 
+// 检测是否为移动端设备（手机或 iPad/平板触控屏）
+const isMobileDevice = () => {
+  if (typeof window === 'undefined') return false;
+  return window.innerWidth < 1024 || 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+};
+
+// 全屏请求辅助函数
+const requestFullscreenMode = () => {
+  try {
+    const docEl = document.documentElement as any;
+    if (docEl.requestFullscreen) {
+      docEl.requestFullscreen().catch(() => {});
+    } else if (docEl.webkitRequestFullscreen) {
+      docEl.webkitRequestFullscreen();
+    } else if (docEl.mozRequestFullScreen) {
+      docEl.mozRequestFullScreen();
+    } else if (docEl.msRequestFullscreen) {
+      docEl.msRequestFullscreen();
+    }
+  } catch (e) {
+    console.warn('Fullscreen error:', e);
+  }
+};
+
+// 退出全屏辅助函数
+const exitFullscreenMode = () => {
+  try {
+    const doc = document as any;
+    if (doc.exitFullscreen) {
+      doc.exitFullscreen().catch(() => {});
+    } else if (doc.webkitExitFullscreen) {
+      doc.webkitExitFullscreen();
+    } else if (doc.mozCancelFullScreen) {
+      doc.mozCancelFullScreen();
+    } else if (doc.msExitFullscreen) {
+      doc.msExitFullscreen();
+    }
+  } catch (e) {
+    console.warn('Exit fullscreen error:', e);
+  }
+};
+
 export const App: React.FC = () => {
   // 模式切换：'edit' (讲稿输入) | 'read' (提词跟读)
   const [viewMode, setViewMode] = useState<'edit' | 'read'>('edit');
@@ -26,9 +68,13 @@ export const App: React.FC = () => {
   // 讲稿跟随状态
   const [trackingStatus, setTrackingStatus] = useState<TrackingStatus>('unstarted');
   const [isPaused, setIsPaused] = useState(false);
-  const [fontSize, setFontSize] = useState(30); // 桌面默认 30px
-  const [lineHeight, setLineHeight] = useState(1.8); // 默认 1.8 倍行距（3档：1.5 / 1.8 / 2.0）
+  const [fontSize, setFontSize] = useState(27); // 演示页面默认字号 27px
+  const [lineHeight, setLineHeight] = useState(1.6); // 默认 1.6 倍行距（3档：1.4 / 1.6 / 1.8）
   const [isDebugOpen, setIsDebugOpen] = useState(false);
+
+  // 全屏与状态栏控制
+  const [isStatusBarVisible, setIsStatusBarVisible] = useState(true);
+  const [isFullscreen, setIsFullscreen] = useState(false);
 
   // 算法诊断数据缓存
   const [lastSpeechFragment, setLastSpeechFragment] = useState('');
@@ -86,7 +132,7 @@ export const App: React.FC = () => {
     }
   });
 
-  // 语音模拟推流器 Hook (免开麦验证 10,000 字长文与跳段)
+  // 语音模拟推流器 Hook (免开麦验证长文与跳段)
   const {
     isSimulating,
     speedMultiplier,
@@ -101,7 +147,7 @@ export const App: React.FC = () => {
     onSpeechChunk: (chunk) => handleIncomingSpeech(chunk)
   });
 
-  // 开始跟稿
+  // 开始跟稿（演示模式）
   const handleStartReading = () => {
     if (script.sentences.length === 0) return;
     setViewMode('read');
@@ -110,6 +156,14 @@ export const App: React.FC = () => {
     matcherRef.current.resetPosition(0);
     matcherRef.current.clearBuffer();
     setTrackingStatus('listening');
+
+    // 移动端/iPad 运行演示时跳全屏，并隐藏顶上状态栏
+    if (isMobileDevice()) {
+      setIsStatusBarVisible(false);
+      requestFullscreenMode();
+    } else {
+      setIsStatusBarVisible(true);
+    }
 
     // 默认尝试开启麦克风
     if (isSpeechSupported) {
@@ -121,9 +175,36 @@ export const App: React.FC = () => {
   const handleBackToEdit = () => {
     stopListening();
     stopSimulation();
+    if (isFullscreen) {
+      exitFullscreenMode();
+    }
+    setIsStatusBarVisible(true);
     setViewMode('edit');
     setTrackingStatus('unstarted');
   };
+
+  // 切换全屏
+  const handleToggleFullscreen = useCallback(() => {
+    if (isFullscreen) {
+      exitFullscreenMode();
+    } else {
+      requestFullscreenMode();
+    }
+  }, [isFullscreen]);
+
+  // 监听原生全屏状态变化
+  useEffect(() => {
+    const handleFsChange = () => {
+      const doc = document as any;
+      setIsFullscreen(Boolean(doc.fullscreenElement || doc.webkitFullscreenElement));
+    };
+    document.addEventListener('fullscreenchange', handleFsChange);
+    document.addEventListener('webkitfullscreenchange', handleFsChange);
+    return () => {
+      document.removeEventListener('fullscreenchange', handleFsChange);
+      document.removeEventListener('webkitfullscreenchange', handleFsChange);
+    };
+  }, []);
 
   // 切换暂停/恢复
   const handleTogglePause = useCallback(() => {
@@ -185,8 +266,8 @@ export const App: React.FC = () => {
     resumeAutoScroll();
   }, [currentIndex, resumeAutoScroll]);
 
-  // 循环切换行距：3档调节 (最小 1.5, 标准 1.8, 最大 2.0)
-  const LINE_HEIGHT_PRESETS = [1.5, 1.8, 2.0];
+  // 循环切换行距：3档调节 (1.4 -> 1.6 -> 1.8，默认 1.6)
+  const LINE_HEIGHT_PRESETS = [1.4, 1.6, 1.8];
   const handleCycleLineHeight = useCallback(() => {
     setLineHeight((prev) => {
       const idx = LINE_HEIGHT_PRESETS.findIndex((lh) => Math.abs(lh - prev) < 0.05);
@@ -225,7 +306,7 @@ export const App: React.FC = () => {
         setFontSize((prev) => Math.min(48, prev + 2));
       } else if (e.key === '-' || e.key === '_') {
         e.preventDefault();
-        setFontSize((prev) => Math.max(20, prev - 2));
+        setFontSize((prev) => Math.max(18, prev - 2));
       } else if (e.key === 'l' || e.key === 'L') {
         e.preventDefault();
         handleCycleLineHeight();
@@ -247,28 +328,32 @@ export const App: React.FC = () => {
   ]);
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col font-sans select-none">
+    <div className="fixed inset-0 w-full h-full bg-slate-950 text-slate-100 flex flex-col font-sans select-none overflow-hidden">
       {viewMode === 'edit' ? (
-        <EditorView
-          rawText={rawText}
-          onChangeText={setRawText}
-          onStartReading={handleStartReading}
-          isSpeechSupported={isSpeechSupported}
-        />
-      ) : (
-        <div className="relative flex-1 flex flex-col h-screen overflow-hidden">
-          {/* 顶部状态栏 */}
-          <StatusBar
-            status={trackingStatus}
-            isListening={isListening || isSimulating}
-            currentSentence={currentIndex}
-            totalSentences={script.totalSentences}
-            isManualOverridden={isManualOverridden}
-            onResumeAutoScroll={resumeAutoScroll}
-            onToggleDebug={() => setIsDebugOpen((prev) => !prev)}
-            onBackToEdit={handleBackToEdit}
-            isDebugOpen={isDebugOpen}
+        <div className="w-full h-full overflow-y-auto">
+          <EditorView
+            rawText={rawText}
+            onChangeText={setRawText}
+            onStartReading={handleStartReading}
+            isSpeechSupported={isSpeechSupported}
           />
+        </div>
+      ) : (
+        <div className="relative flex-1 flex flex-col w-full h-full overflow-hidden">
+          {/* 顶部状态栏（移动端进入演示时自动隐藏，桌面端保持可见） */}
+          {isStatusBarVisible && (
+            <StatusBar
+              status={trackingStatus}
+              isListening={isListening || isSimulating}
+              currentSentence={currentIndex}
+              totalSentences={script.totalSentences}
+              isManualOverridden={isManualOverridden}
+              onResumeAutoScroll={resumeAutoScroll}
+              onToggleDebug={() => setIsDebugOpen((prev) => !prev)}
+              onBackToEdit={handleBackToEdit}
+              isDebugOpen={isDebugOpen}
+            />
+          )}
 
           {/* 错误提示横幅 */}
           {speechError && (
@@ -284,14 +369,17 @@ export const App: React.FC = () => {
           )}
 
           {/* 提词器阅读视口 */}
-          <ReaderView
-            ref={containerRef}
-            script={script}
-            currentSentenceIndex={currentIndex}
-            fontSize={fontSize}
-            lineHeight={lineHeight}
-            onSentenceClick={handleSentenceClick}
-          />
+          <div className="relative flex-1 w-full h-full overflow-hidden">
+            <ReaderView
+              ref={containerRef}
+              script={script}
+              currentSentenceIndex={currentIndex}
+              fontSize={fontSize}
+              lineHeight={lineHeight}
+              isStatusBarVisible={isStatusBarVisible}
+              onSentenceClick={handleSentenceClick}
+            />
+          </div>
 
           {/* 底部悬浮控制条 */}
           <ControlBar
@@ -302,9 +390,12 @@ export const App: React.FC = () => {
             onRecalibrate={handleRecalibrate}
             fontSize={fontSize}
             onIncreaseFontSize={() => setFontSize((s) => Math.min(48, s + 2))}
-            onDecreaseFontSize={() => setFontSize((s) => Math.max(20, s - 2))}
+            onDecreaseFontSize={() => setFontSize((s) => Math.max(18, s - 2))}
             lineHeight={lineHeight}
             onCycleLineHeight={handleCycleLineHeight}
+            onBackToEdit={handleBackToEdit}
+            isFullscreen={isFullscreen}
+            onToggleFullscreen={handleToggleFullscreen}
           />
 
           {/* 调试面板 */}

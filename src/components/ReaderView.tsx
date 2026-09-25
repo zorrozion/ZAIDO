@@ -6,6 +6,7 @@ interface ReaderViewProps {
   currentSentenceIndex: number;
   fontSize: number;
   lineHeight: number;
+  isStatusBarVisible?: boolean;
   onSentenceClick: (index: number) => void;
 }
 
@@ -14,42 +15,43 @@ export const ReaderView = forwardRef<HTMLDivElement, ReaderViewProps>(({
   currentSentenceIndex,
   fontSize,
   lineHeight,
+  isStatusBarVisible = true,
   onSentenceClick
 }, ref) => {
   return (
     <div
       ref={ref}
-      className="relative w-full h-[calc(100vh-2.75rem)] sm:h-[calc(100vh-3rem)] overflow-y-auto px-2 sm:px-6 md:px-8 lg:px-12 pt-6 sm:pt-10 pb-24 sm:pb-40 scroll-smooth"
+      className="relative w-full h-full overflow-y-auto overflow-x-hidden px-0 pt-3 sm:pt-4 pb-28 sm:pb-36 scroll-smooth select-none"
       style={{
         fontFamily: '"Microsoft YaHei", "PingFang SC", "Noto Sans CJK SC", -apple-system, sans-serif'
       }}
     >
-      {/* 视口约上五分之一 (20%) 黄金聚焦点参考线（仅保留纯线条，无文字） */}
+      {/* 视口上方 5% 黄金聚焦点参考线（仅保留纯线条，无文字） */}
       <div
-        className="pointer-events-none fixed left-0 w-full z-10 border-t border-dashed border-blue-500/25"
-        style={{ top: 'calc(2.75rem + 20vh)' }}
+        className="pointer-events-none fixed left-0 w-full z-10 border-t border-dashed border-blue-500/30"
+        style={{ top: isStatusBarVisible ? 'calc(2.75rem + 5%)' : '5%' }}
       />
 
-      <div className="max-w-5xl mx-auto space-y-6 sm:space-y-8">
+      <div className="w-full px-0 space-y-5 sm:space-y-7">
         {script.paragraphs.map((paragraph) => {
           return (
             <div
               key={paragraph.id}
-              className="transition-all duration-300 relative group"
+              className="transition-all duration-300 relative group w-full px-0"
             >
-              {/* 段落正文渲染 */}
+              {/* 段落正文渲染：左右完全不留边距 */}
               <div
                 style={{
                   fontSize: `${fontSize}px`,
                   lineHeight: lineHeight.toString()
                 }}
-                className="tracking-wide"
+                className="tracking-wide break-words w-full px-0"
               >
                 {paragraph.sentences.map((sentence: SentenceItem) => {
                   const isCurrent = sentence.globalIndex === currentSentenceIndex;
                   const isPast = sentence.globalIndex < currentSentenceIndex;
 
-                  let sentenceClass = 'transition-all duration-300 rounded px-1 -mx-1 inline cursor-pointer select-text ';
+                  let sentenceClass = 'transition-all duration-300 rounded inline cursor-pointer select-text px-0.5 ';
 
                   if (isCurrent) {
                     sentenceClass += 'text-white font-medium bg-blue-500/25 shadow-sm shadow-blue-500/10 ring-1 ring-blue-400/40';

@@ -7,7 +7,10 @@ import {
   RotateCcw,
   ZoomIn,
   ZoomOut,
-  ChevronsUpDown
+  ChevronsUpDown,
+  ArrowLeft,
+  Maximize,
+  Minimize
 } from 'lucide-react';
 
 interface ControlBarProps {
@@ -21,6 +24,9 @@ interface ControlBarProps {
   onDecreaseFontSize: () => void;
   lineHeight: number;
   onCycleLineHeight: () => void;
+  onBackToEdit?: () => void;
+  isFullscreen?: boolean;
+  onToggleFullscreen?: () => void;
 }
 
 export const ControlBar: React.FC<ControlBarProps> = ({
@@ -33,14 +39,33 @@ export const ControlBar: React.FC<ControlBarProps> = ({
   onIncreaseFontSize,
   onDecreaseFontSize,
   lineHeight,
-  onCycleLineHeight
+  onCycleLineHeight,
+  onBackToEdit,
+  isFullscreen,
+  onToggleFullscreen
 }) => {
   return (
     <aside
       aria-label="讲稿快捷控制"
-      className="fixed bottom-0 left-0 right-0 z-40 w-full flex justify-center pointer-events-none pb-[env(safe-area-inset-bottom,2px)]"
+      onTouchMove={(e) => e.stopPropagation()}
+      className="fixed bottom-0 left-0 right-0 z-40 w-full flex justify-center pointer-events-none pb-[env(safe-area-inset-bottom,4px)] touch-none select-none"
     >
-      <div className="pointer-events-auto flex items-center justify-between sm:justify-center w-full sm:w-auto max-w-2xl px-2 sm:px-3 py-1 sm:py-1.5 bg-slate-900/95 backdrop-blur-md border-t sm:border border-slate-700/80 sm:rounded-2xl shadow-2xl shadow-black/80 select-none">
+      <div className="pointer-events-auto flex items-center justify-between sm:justify-center w-full sm:w-auto max-w-2xl px-1.5 sm:px-3 py-1 sm:py-1.5 bg-slate-900/95 backdrop-blur-md border-t sm:border border-slate-700/80 sm:rounded-2xl shadow-2xl shadow-black/80 select-none touch-none">
+        {/* 返回编辑 (移动端常驻，确保状态栏隐藏时依然随时可退出跟稿) */}
+        {onBackToEdit && (
+          <>
+            <button
+              onClick={onBackToEdit}
+              className="flex items-center space-x-1 p-1.5 sm:px-2 rounded-lg sm:rounded-xl text-slate-400 hover:text-white hover:bg-slate-800 active:bg-slate-700 transition-all text-xs font-medium shrink-0"
+              title="返回编辑讲稿"
+            >
+              <ArrowLeft className="w-4 h-4" />
+              <span className="hidden md:inline">编辑</span>
+            </button>
+            <div className="h-3.5 w-px bg-slate-700/80 mx-0.5 sm:mx-1 shrink-0" />
+          </>
+        )}
+
         {/* 上一段 */}
         <button
           onClick={onPrevParagraph}
@@ -51,7 +76,7 @@ export const ControlBar: React.FC<ControlBarProps> = ({
           <span className="hidden sm:inline">上一段</span>
         </button>
 
-        {/* 暂停 / 继续跟随（手机端纯图标显示三角形/双竖杠，桌面端展示文字，严防手机端折成纵向4个字） */}
+        {/* 暂停 / 继续跟随（手机端纯图标显示三角形/双竖杠，桌面端展示文字） */}
         <button
           onClick={onTogglePause}
           className={`flex items-center justify-center p-1.5 sm:px-3 sm:py-1.5 rounded-lg sm:rounded-xl font-medium text-xs transition-all shrink-0 ${
@@ -98,7 +123,7 @@ export const ControlBar: React.FC<ControlBarProps> = ({
         {/* 字号缩小 */}
         <button
           onClick={onDecreaseFontSize}
-          disabled={fontSize <= 20}
+          disabled={fontSize <= 18}
           className="p-1.5 sm:p-2 rounded-lg sm:rounded-xl text-slate-400 hover:text-slate-200 hover:bg-slate-800 disabled:opacity-30 disabled:cursor-not-allowed transition-colors shrink-0"
           title="减小字号 (快捷键 -)"
         >
@@ -106,7 +131,7 @@ export const ControlBar: React.FC<ControlBarProps> = ({
         </button>
 
         {/* 当前字号显示 */}
-        <span className="text-[11px] font-mono text-slate-400 px-0.5 min-w-[22px] text-center select-none shrink-0">
+        <span className="text-[11px] font-mono text-slate-400 px-0.5 min-w-[20px] text-center select-none shrink-0">
           {fontSize}
         </span>
 
@@ -122,17 +147,35 @@ export const ControlBar: React.FC<ControlBarProps> = ({
 
         <div className="h-3.5 w-px bg-slate-700/80 mx-0.5 sm:mx-1 shrink-0" />
 
-        {/* 行距调节 (循环三档: 1.5 -> 1.8 -> 2.0) */}
+        {/* 行距调节 (循环三档: 1.4 -> 1.6 -> 1.8，默认 1.6) */}
         <button
           onClick={onCycleLineHeight}
           className="flex items-center space-x-0.5 p-1.5 sm:p-2 rounded-lg sm:rounded-xl text-slate-400 hover:text-slate-200 hover:bg-slate-800 transition-colors shrink-0"
-          title={`切换行距 (当前 ${lineHeight.toFixed(1)} 倍，共3档: 1.5 / 1.8 / 2.0，快捷键 L)`}
+          title={`切换行距 (当前 ${lineHeight.toFixed(1)} 倍，共3档: 1.4 / 1.6 / 1.8，快捷键 L)`}
         >
           <ChevronsUpDown className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-blue-400 shrink-0" />
           <span className="text-[11px] font-mono text-slate-300">
             {lineHeight.toFixed(1)}
           </span>
         </button>
+
+        {/* 全屏切换 */}
+        {onToggleFullscreen && (
+          <>
+            <div className="h-3.5 w-px bg-slate-700/80 mx-0.5 sm:mx-1 shrink-0" />
+            <button
+              onClick={onToggleFullscreen}
+              className="p-1.5 sm:p-2 rounded-lg sm:rounded-xl text-slate-400 hover:text-slate-200 hover:bg-slate-800 transition-colors shrink-0"
+              title={isFullscreen ? "退出全屏" : "进入全屏"}
+            >
+              {isFullscreen ? (
+                <Minimize className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+              ) : (
+                <Maximize className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+              )}
+            </button>
+          </>
+        )}
       </div>
     </aside>
   );
