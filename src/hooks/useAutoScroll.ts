@@ -30,8 +30,8 @@ export function useAutoScroll({
     // 句子顶部相对于容器滚动原点的绝对距离
     const elTopRelativeToContainer = elRect.top - containerRect.top + container.scrollTop;
 
-    // 目标位置：让句子顶部停留在视口上方 5% 处，留出下方 95% 视野极大化展示讲稿
-    const targetRatio = 0.05;
+    // 目标位置：让句子顶部停留在视口上方 7% 处，留出下方 93% 视野展示讲稿
+    const targetRatio = 0.07;
     const targetScrollTop = Math.max(0, elTopRelativeToContainer - container.clientHeight * targetRatio);
 
     // 标记为程序触发的平滑滚动，避免被滚轮监听器误判为人工操作
@@ -99,8 +99,8 @@ export function useAutoScroll({
     const currentViewportRatio = (elRect.top - containerRect.top) / container.clientHeight;
 
     // 死区设计（Deadband）：
-    // 若当前句在 2% ~ 9% 的合理可视范围内，允许其保持静止，避免频繁重抖
-    if (currentViewportRatio < 0.02 || currentViewportRatio > 0.09) {
+    // 若当前句在 3% ~ 12% 的合理可视范围内，允许其保持静止，避免频繁重抖
+    if (currentViewportRatio < 0.03 || currentViewportRatio > 0.12) {
       scrollToSentence(currentSentenceIndex, false);
     }
   }, [currentSentenceIndex, isPaused, isManualOverridden, scrollToSentence]);

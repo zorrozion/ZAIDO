@@ -4,13 +4,10 @@ import {
   Pause,
   ChevronLeft,
   ChevronRight,
-  RotateCcw,
   ZoomIn,
   ZoomOut,
   ChevronsUpDown,
-  ArrowLeft,
-  Maximize,
-  Minimize
+  ArrowLeft
 } from 'lucide-react';
 
 interface ControlBarProps {
@@ -18,15 +15,14 @@ interface ControlBarProps {
   onTogglePause: () => void;
   onPrevParagraph: () => void;
   onNextParagraph: () => void;
-  onRecalibrate: () => void;
+  currentSentenceIndex: number;
+  totalSentences: number;
   fontSize: number;
   onIncreaseFontSize: () => void;
   onDecreaseFontSize: () => void;
   lineHeight: number;
   onCycleLineHeight: () => void;
   onBackToEdit?: () => void;
-  isFullscreen?: boolean;
-  onToggleFullscreen?: () => void;
 }
 
 export const ControlBar: React.FC<ControlBarProps> = ({
@@ -34,16 +30,19 @@ export const ControlBar: React.FC<ControlBarProps> = ({
   onTogglePause,
   onPrevParagraph,
   onNextParagraph,
-  onRecalibrate,
+  currentSentenceIndex,
+  totalSentences,
   fontSize,
   onIncreaseFontSize,
   onDecreaseFontSize,
   lineHeight,
   onCycleLineHeight,
-  onBackToEdit,
-  isFullscreen,
-  onToggleFullscreen
+  onBackToEdit
 }) => {
+  const progressPercent = totalSentences > 0
+    ? Math.min(100, Math.round(((currentSentenceIndex + 1) / totalSentences) * 100))
+    : 0;
+
   return (
     <aside
       aria-label="讲稿快捷控制"
@@ -76,7 +75,7 @@ export const ControlBar: React.FC<ControlBarProps> = ({
           <span className="hidden sm:inline">上一段</span>
         </button>
 
-        {/* 暂停 / 继续跟随（手机端纯图标显示三角形/双竖杠，桌面端展示文字） */}
+        {/* 暂停 / 继续跟随 */}
         <button
           onClick={onTogglePause}
           className={`flex items-center justify-center p-1.5 sm:px-3 sm:py-1.5 rounded-lg sm:rounded-xl font-medium text-xs transition-all shrink-0 ${
@@ -111,14 +110,23 @@ export const ControlBar: React.FC<ControlBarProps> = ({
 
         <div className="h-3.5 w-px bg-slate-700/80 mx-0.5 sm:mx-1 shrink-0" />
 
-        {/* 重新校准 */}
-        <button
-          onClick={onRecalibrate}
-          className="p-1.5 sm:p-2 rounded-lg sm:rounded-xl text-slate-400 hover:text-slate-200 hover:bg-slate-800 transition-colors shrink-0"
-          title="重新校准与重置缓冲区 (快捷键 R)"
+        {/* 进度显示：生动简洁（微型渐变动态指示条 + 百分比） */}
+        <div
+          className="flex items-center space-x-1.5 px-2 py-0.5 sm:py-1 rounded-lg bg-slate-800/80 border border-slate-700/60 shrink-0 select-none"
+          title={`当前进度：第 ${currentSentenceIndex + 1} 句 / 共 ${totalSentences} 句 (${progressPercent}%)`}
         >
-          <RotateCcw className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-        </button>
+          <div className="w-9 sm:w-14 h-1.5 bg-slate-700/90 rounded-full overflow-hidden shrink-0">
+            <div
+              className="h-full bg-gradient-to-r from-blue-500 to-emerald-400 rounded-full transition-all duration-300"
+              style={{ width: `${progressPercent}%` }}
+            />
+          </div>
+          <span className="font-mono text-[11px] sm:text-xs font-bold text-emerald-400 min-w-[28px] text-right">
+            {progressPercent}%
+          </span>
+        </div>
+
+        <div className="h-3.5 w-px bg-slate-700/80 mx-0.5 sm:mx-1 shrink-0" />
 
         {/* 字号缩小 */}
         <button
@@ -158,24 +166,6 @@ export const ControlBar: React.FC<ControlBarProps> = ({
             {lineHeight.toFixed(1)}
           </span>
         </button>
-
-        {/* 全屏切换 */}
-        {onToggleFullscreen && (
-          <>
-            <div className="h-3.5 w-px bg-slate-700/80 mx-0.5 sm:mx-1 shrink-0" />
-            <button
-              onClick={onToggleFullscreen}
-              className="p-1.5 sm:p-2 rounded-lg sm:rounded-xl text-slate-400 hover:text-slate-200 hover:bg-slate-800 transition-colors shrink-0"
-              title={isFullscreen ? "退出全屏" : "进入全屏"}
-            >
-              {isFullscreen ? (
-                <Minimize className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-              ) : (
-                <Maximize className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-              )}
-            </button>
-          </>
-        )}
       </div>
     </aside>
   );

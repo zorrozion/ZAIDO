@@ -18,42 +18,6 @@ const isMobileDevice = () => {
   return window.innerWidth < 1024 || 'ontouchstart' in window || navigator.maxTouchPoints > 0;
 };
 
-// 全屏请求辅助函数
-const requestFullscreenMode = () => {
-  try {
-    const docEl = document.documentElement as any;
-    if (docEl.requestFullscreen) {
-      docEl.requestFullscreen().catch(() => {});
-    } else if (docEl.webkitRequestFullscreen) {
-      docEl.webkitRequestFullscreen();
-    } else if (docEl.mozRequestFullScreen) {
-      docEl.mozRequestFullScreen();
-    } else if (docEl.msRequestFullscreen) {
-      docEl.msRequestFullscreen();
-    }
-  } catch (e) {
-    console.warn('Fullscreen error:', e);
-  }
-};
-
-// 退出全屏辅助函数
-const exitFullscreenMode = () => {
-  try {
-    const doc = document as any;
-    if (doc.exitFullscreen) {
-      doc.exitFullscreen().catch(() => {});
-    } else if (doc.webkitExitFullscreen) {
-      doc.webkitExitFullscreen();
-    } else if (doc.mozCancelFullScreen) {
-      doc.mozCancelFullScreen();
-    } else if (doc.msExitFullscreen) {
-      doc.msExitFullscreen();
-    }
-  } catch (e) {
-    console.warn('Exit fullscreen error:', e);
-  }
-};
-
 export const App: React.FC = () => {
   // 模式切换：'edit' (讲稿输入) | 'read' (提词跟读)
   const [viewMode, setViewMode] = useState<'edit' | 'read'>('edit');
@@ -72,9 +36,8 @@ export const App: React.FC = () => {
   const [lineHeight, setLineHeight] = useState(1.6); // 默认 1.6 倍行距（3档：1.4 / 1.6 / 1.8）
   const [isDebugOpen, setIsDebugOpen] = useState(false);
 
-  // 全屏与状态栏控制
+  // 状态栏在移动端跟读时隐藏
   const [isStatusBarVisible, setIsStatusBarVisible] = useState(true);
-  const [isFullscreen, setIsFullscreen] = useState(false);
 
   // 算法诊断数据缓存
   const [lastSpeechFragment, setLastSpeechFragment] = useState('');
@@ -157,10 +120,9 @@ export const App: React.FC = () => {
     matcherRef.current.clearBuffer();
     setTrackingStatus('listening');
 
-    // 移动端/iPad 运行演示时跳全屏，并隐藏顶上状态栏
+    // 移动端/iPad 运行演示时隐藏顶上状态栏，释放最大垂直阅读视野
     if (isMobileDevice()) {
       setIsStatusBarVisible(false);
-      requestFullscreenMode();
     } else {
       setIsStatusBarVisible(true);
     }
@@ -175,36 +137,10 @@ export const App: React.FC = () => {
   const handleBackToEdit = () => {
     stopListening();
     stopSimulation();
-    if (isFullscreen) {
-      exitFullscreenMode();
-    }
     setIsStatusBarVisible(true);
     setViewMode('edit');
     setTrackingStatus('unstarted');
   };
-
-  // 切换全屏
-  const handleToggleFullscreen = useCallback(() => {
-    if (isFullscreen) {
-      exitFullscreenMode();
-    } else {
-      requestFullscreenMode();
-    }
-  }, [isFullscreen]);
-
-  // 监听原生全屏状态变化
-  useEffect(() => {
-    const handleFsChange = () => {
-      const doc = document as any;
-      setIsFullscreen(Boolean(doc.fullscreenElement || doc.webkitFullscreenElement));
-    };
-    document.addEventListener('fullscreenchange', handleFsChange);
-    document.addEventListener('webkitfullscreenchange', handleFsChange);
-    return () => {
-      document.removeEventListener('fullscreenchange', handleFsChange);
-      document.removeEventListener('webkitfullscreenchange', handleFsChange);
-    };
-  }, []);
 
   // 切换暂停/恢复
   const handleTogglePause = useCallback(() => {
@@ -340,7 +276,7 @@ export const App: React.FC = () => {
         </div>
       ) : (
         <div className="relative flex-1 flex flex-col w-full h-full overflow-hidden">
-          {/* 顶部状态栏（移动端进入演示时自动隐藏，桌面端保持可见） */}
+          {/* 顶部状态栏（移动端跟读时隐藏） */}
           {isStatusBarVisible && (
             <StatusBar
               status={trackingStatus}
@@ -381,21 +317,20 @@ export const App: React.FC = () => {
             />
           </div>
 
-          {/* 底部悬浮控制条 */}
+          {/* 底部悬浮控制条（含返回编辑、播放控制、生动简洁的进度显示、字号与行距） */}
           <ControlBar
             isPaused={isPaused}
             onTogglePause={handleTogglePause}
             onPrevParagraph={handlePrevParagraph}
             onNextParagraph={handleNextParagraph}
-            onRecalibrate={handleRecalibrate}
+            currentSentenceIndex={currentIndex}
+            totalSentences={script.totalSentences}
             fontSize={fontSize}
             onIncreaseFontSize={() => setFontSize((s) => Math.min(48, s + 2))}
             onDecreaseFontSize={() => setFontSize((s) => Math.max(18, s - 2))}
             lineHeight={lineHeight}
             onCycleLineHeight={handleCycleLineHeight}
             onBackToEdit={handleBackToEdit}
-            isFullscreen={isFullscreen}
-            onToggleFullscreen={handleToggleFullscreen}
           />
 
           {/* 调试面板 */}
