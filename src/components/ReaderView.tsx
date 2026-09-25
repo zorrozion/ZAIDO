@@ -17,7 +17,7 @@ export const ReaderView = forwardRef<HTMLDivElement, ReaderViewProps>(({
   return (
     <div
       ref={ref}
-      className="relative w-full h-[calc(100vh-3.5rem)] overflow-y-auto px-6 sm:px-12 md:px-20 lg:px-36 xl:px-56 pt-24 pb-72 scroll-smooth"
+      className="relative w-full h-[calc(100vh-2.75rem)] sm:h-[calc(100vh-3rem)] overflow-y-auto px-4 sm:px-12 md:px-20 lg:px-36 xl:px-56 pt-8 sm:pt-16 pb-28 sm:pb-48 scroll-smooth"
       style={{
         fontFamily: '"Microsoft YaHei", "PingFang SC", "Noto Sans CJK SC", -apple-system, sans-serif'
       }}
@@ -25,7 +25,7 @@ export const ReaderView = forwardRef<HTMLDivElement, ReaderViewProps>(({
       {/* 视口约 38% 黄金阅读参考指示标尺（微弱半透明） */}
       <div
         className="pointer-events-none fixed left-0 w-full z-10 hidden sm:block border-t border-dashed border-blue-500/15"
-        style={{ top: 'calc(3.5rem + 38vh)' }}
+        style={{ top: 'calc(2.75rem + 38vh)' }}
       >
         <span className="absolute left-2 -top-3 text-[10px] font-mono tracking-wider text-blue-400/40 uppercase">
           FOCUS 38%
