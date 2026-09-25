@@ -27,6 +27,7 @@ export const App: React.FC = () => {
   const [trackingStatus, setTrackingStatus] = useState<TrackingStatus>('unstarted');
   const [isPaused, setIsPaused] = useState(false);
   const [fontSize, setFontSize] = useState(30); // 桌面默认 30px
+  const [lineHeight, setLineHeight] = useState(1.7); // 默认 1.7 倍行距
   const [isDebugOpen, setIsDebugOpen] = useState(false);
 
   // 算法诊断数据缓存
@@ -184,7 +185,17 @@ export const App: React.FC = () => {
     resumeAutoScroll();
   }, [currentIndex, resumeAutoScroll]);
 
-  // 全局快捷键绑定 (Space, ArrowLeft, ArrowRight, R, +, -, D)
+  // 循环切换行距 (1.4 -> 1.7 -> 2.0 -> 2.3)
+  const LINE_HEIGHT_PRESETS = [1.4, 1.7, 2.0, 2.3];
+  const handleCycleLineHeight = useCallback(() => {
+    setLineHeight((prev) => {
+      const idx = LINE_HEIGHT_PRESETS.findIndex((lh) => Math.abs(lh - prev) < 0.05);
+      const nextIdx = (idx + 1) % LINE_HEIGHT_PRESETS.length;
+      return LINE_HEIGHT_PRESETS[nextIdx];
+    });
+  }, []);
+
+  // 全局快捷键绑定 (Space, ArrowLeft, ArrowRight, R, +, -, L, D)
   useEffect(() => {
     if (viewMode !== 'read') return;
 
@@ -215,6 +226,9 @@ export const App: React.FC = () => {
       } else if (e.key === '-' || e.key === '_') {
         e.preventDefault();
         setFontSize((prev) => Math.max(20, prev - 2));
+      } else if (e.key === 'l' || e.key === 'L') {
+        e.preventDefault();
+        handleCycleLineHeight();
       } else if (e.key === 'd' || e.key === 'D') {
         e.preventDefault();
         setIsDebugOpen((prev) => !prev);
@@ -228,7 +242,8 @@ export const App: React.FC = () => {
     handleTogglePause,
     handlePrevParagraph,
     handleNextParagraph,
-    handleRecalibrate
+    handleRecalibrate,
+    handleCycleLineHeight
   ]);
 
   return (
@@ -274,6 +289,7 @@ export const App: React.FC = () => {
             script={script}
             currentSentenceIndex={currentIndex}
             fontSize={fontSize}
+            lineHeight={lineHeight}
             onSentenceClick={handleSentenceClick}
           />
 
@@ -287,6 +303,8 @@ export const App: React.FC = () => {
             fontSize={fontSize}
             onIncreaseFontSize={() => setFontSize((s) => Math.min(48, s + 2))}
             onDecreaseFontSize={() => setFontSize((s) => Math.max(20, s - 2))}
+            lineHeight={lineHeight}
+            onCycleLineHeight={handleCycleLineHeight}
           />
 
           {/* 调试面板 */}

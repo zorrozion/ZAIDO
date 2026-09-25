@@ -6,7 +6,8 @@ import {
   ChevronRight,
   RotateCcw,
   ZoomIn,
-  ZoomOut
+  ZoomOut,
+  ChevronsUpDown
 } from 'lucide-react';
 
 interface ControlBarProps {
@@ -18,6 +19,8 @@ interface ControlBarProps {
   fontSize: number;
   onIncreaseFontSize: () => void;
   onDecreaseFontSize: () => void;
+  lineHeight: number;
+  onCycleLineHeight: () => void;
 }
 
 export const ControlBar: React.FC<ControlBarProps> = ({
@@ -28,14 +31,16 @@ export const ControlBar: React.FC<ControlBarProps> = ({
   onRecalibrate,
   fontSize,
   onIncreaseFontSize,
-  onDecreaseFontSize
+  onDecreaseFontSize,
+  lineHeight,
+  onCycleLineHeight
 }) => {
   return (
     <aside
       aria-label="讲稿快捷控制"
       className="fixed bottom-0 left-0 right-0 z-40 w-full flex justify-center pointer-events-none pb-[env(safe-area-inset-bottom,2px)]"
     >
-      <div className="pointer-events-auto flex items-center justify-between sm:justify-center w-full sm:w-auto max-w-xl px-2 sm:px-3 py-1 sm:py-1.5 bg-slate-900/95 backdrop-blur-md border-t sm:border border-slate-700/80 sm:rounded-2xl shadow-2xl shadow-black/80 select-none">
+      <div className="pointer-events-auto flex items-center justify-between sm:justify-center w-full sm:w-auto max-w-2xl px-2 sm:px-3 py-1 sm:py-1.5 bg-slate-900/95 backdrop-blur-md border-t sm:border border-slate-700/80 sm:rounded-2xl shadow-2xl shadow-black/80 select-none">
         {/* 上一段 */}
         <button
           onClick={onPrevParagraph}
@@ -113,6 +118,20 @@ export const ControlBar: React.FC<ControlBarProps> = ({
           title="增大字号 (快捷键 +)"
         >
           <ZoomIn className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+        </button>
+
+        <div className="h-3.5 w-px bg-slate-700/80 mx-0.5 sm:mx-1 shrink-0" />
+
+        {/* 行距调节 (循环切换 1.4 -> 1.7 -> 2.0 -> 2.3 倍) */}
+        <button
+          onClick={onCycleLineHeight}
+          className="flex items-center space-x-0.5 p-1.5 sm:p-2 rounded-lg sm:rounded-xl text-slate-400 hover:text-slate-200 hover:bg-slate-800 transition-colors shrink-0"
+          title={`切换行距 (当前 ${lineHeight.toFixed(1)} 倍，快捷键 L)`}
+        >
+          <ChevronsUpDown className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-blue-400 shrink-0" />
+          <span className="text-[11px] font-mono text-slate-300">
+            {lineHeight.toFixed(1)}
+          </span>
         </button>
       </div>
     </aside>

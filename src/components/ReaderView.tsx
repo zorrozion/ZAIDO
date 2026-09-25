@@ -5,6 +5,7 @@ interface ReaderViewProps {
   script: ScriptModel;
   currentSentenceIndex: number;
   fontSize: number;
+  lineHeight: number;
   onSentenceClick: (index: number) => void;
 }
 
@@ -12,27 +13,28 @@ export const ReaderView = forwardRef<HTMLDivElement, ReaderViewProps>(({
   script,
   currentSentenceIndex,
   fontSize,
+  lineHeight,
   onSentenceClick
 }, ref) => {
   return (
     <div
       ref={ref}
-      className="relative w-full h-[calc(100vh-2.75rem)] sm:h-[calc(100vh-3rem)] overflow-y-auto px-4 sm:px-12 md:px-20 lg:px-36 xl:px-56 pt-8 sm:pt-16 pb-28 sm:pb-48 scroll-smooth"
+      className="relative w-full h-[calc(100vh-2.75rem)] sm:h-[calc(100vh-3rem)] overflow-y-auto px-2 sm:px-6 md:px-8 lg:px-12 pt-6 sm:pt-10 pb-24 sm:pb-40 scroll-smooth"
       style={{
         fontFamily: '"Microsoft YaHei", "PingFang SC", "Noto Sans CJK SC", -apple-system, sans-serif'
       }}
     >
-      {/* 视口约 38% 黄金阅读参考指示标尺（微弱半透明） */}
+      {/* 视口约上五分之一 (20%) 黄金聚焦点参考指示标尺（微弱半透明） */}
       <div
-        className="pointer-events-none fixed left-0 w-full z-10 hidden sm:block border-t border-dashed border-blue-500/15"
-        style={{ top: 'calc(2.75rem + 38vh)' }}
+        className="pointer-events-none fixed left-0 w-full z-10 hidden sm:block border-t border-dashed border-blue-500/20"
+        style={{ top: 'calc(2.75rem + 20vh)' }}
       >
-        <span className="absolute left-2 -top-3 text-[10px] font-mono tracking-wider text-blue-400/40 uppercase">
-          FOCUS 38%
+        <span className="absolute left-2 -top-3 text-[10px] font-mono tracking-wider text-blue-400/50 uppercase">
+          FOCUS 20%
         </span>
       </div>
 
-      <div className="max-w-4xl mx-auto space-y-12">
+      <div className="max-w-5xl mx-auto space-y-6 sm:space-y-8">
         {script.paragraphs.map((paragraph) => {
           return (
             <div
@@ -43,7 +45,7 @@ export const ReaderView = forwardRef<HTMLDivElement, ReaderViewProps>(({
               <div
                 style={{
                   fontSize: `${fontSize}px`,
-                  lineHeight: '1.85'
+                  lineHeight: lineHeight.toString()
                 }}
                 className="tracking-wide"
               >
