@@ -24,15 +24,11 @@ export const ReaderView = forwardRef<HTMLDivElement, ReaderViewProps>(({
         fontFamily: '"Microsoft YaHei", "PingFang SC", "Noto Sans CJK SC", -apple-system, sans-serif'
       }}
     >
-      {/* 视口约上五分之一 (20%) 黄金聚焦点参考指示标尺（微弱半透明） */}
+      {/* 视口约上五分之一 (20%) 黄金聚焦点参考线（仅保留纯线条，无文字） */}
       <div
-        className="pointer-events-none fixed left-0 w-full z-10 hidden sm:block border-t border-dashed border-blue-500/20"
+        className="pointer-events-none fixed left-0 w-full z-10 border-t border-dashed border-blue-500/25"
         style={{ top: 'calc(2.75rem + 20vh)' }}
-      >
-        <span className="absolute left-2 -top-3 text-[10px] font-mono tracking-wider text-blue-400/50 uppercase">
-          FOCUS 20%
-        </span>
-      </div>
+      />
 
       <div className="max-w-5xl mx-auto space-y-6 sm:space-y-8">
         {script.paragraphs.map((paragraph) => {

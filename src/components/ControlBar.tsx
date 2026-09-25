@@ -122,11 +122,11 @@ export const ControlBar: React.FC<ControlBarProps> = ({
 
         <div className="h-3.5 w-px bg-slate-700/80 mx-0.5 sm:mx-1 shrink-0" />
 
-        {/* 行距调节 (循环切换 1.4 -> 1.7 -> 2.0 -> 2.3 倍) */}
+        {/* 行距调节 (循环三档: 1.5 -> 1.8 -> 2.0) */}
         <button
           onClick={onCycleLineHeight}
           className="flex items-center space-x-0.5 p-1.5 sm:p-2 rounded-lg sm:rounded-xl text-slate-400 hover:text-slate-200 hover:bg-slate-800 transition-colors shrink-0"
-          title={`切换行距 (当前 ${lineHeight.toFixed(1)} 倍，快捷键 L)`}
+          title={`切换行距 (当前 ${lineHeight.toFixed(1)} 倍，共3档: 1.5 / 1.8 / 2.0，快捷键 L)`}
         >
           <ChevronsUpDown className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-blue-400 shrink-0" />
           <span className="text-[11px] font-mono text-slate-300">

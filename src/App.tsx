@@ -27,7 +27,7 @@ export const App: React.FC = () => {
   const [trackingStatus, setTrackingStatus] = useState<TrackingStatus>('unstarted');
   const [isPaused, setIsPaused] = useState(false);
   const [fontSize, setFontSize] = useState(30); // 桌面默认 30px
-  const [lineHeight, setLineHeight] = useState(1.7); // 默认 1.7 倍行距
+  const [lineHeight, setLineHeight] = useState(1.8); // 默认 1.8 倍行距（3档：1.5 / 1.8 / 2.0）
   const [isDebugOpen, setIsDebugOpen] = useState(false);
 
   // 算法诊断数据缓存
@@ -185,8 +185,8 @@ export const App: React.FC = () => {
     resumeAutoScroll();
   }, [currentIndex, resumeAutoScroll]);
 
-  // 循环切换行距 (1.4 -> 1.7 -> 2.0 -> 2.3)
-  const LINE_HEIGHT_PRESETS = [1.4, 1.7, 2.0, 2.3];
+  // 循环切换行距：3档调节 (最小 1.5, 标准 1.8, 最大 2.0)
+  const LINE_HEIGHT_PRESETS = [1.5, 1.8, 2.0];
   const handleCycleLineHeight = useCallback(() => {
     setLineHeight((prev) => {
       const idx = LINE_HEIGHT_PRESETS.findIndex((lh) => Math.abs(lh - prev) < 0.05);
