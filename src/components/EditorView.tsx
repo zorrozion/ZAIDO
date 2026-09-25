@@ -18,8 +18,11 @@ export const EditorView: React.FC<EditorViewProps> = ({
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const charCount = rawText.replace(/\s/g, '').length;
-  // 中文正常演讲讲速约 160 ~ 200 字/分钟，估算阅读时间
-  const estMinutes = Math.max(1, Math.round(charCount / 180));
+  // 主日讲道讲速（含宣读、顿歇、释经与祷告）约 130 ~ 150 字/分钟，中位数 140 字/分
+  const PREACHING_WPM = 140;
+  const estMinutes = Math.max(1, Math.round(charCount / PREACHING_WPM));
+  const minMinutes = Math.max(1, Math.round(charCount / 150));
+  const maxMinutes = Math.max(1, Math.round(charCount / 130));
 
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -69,22 +72,22 @@ export const EditorView: React.FC<EditorViewProps> = ({
           <span className="font-medium">一键载入真实测试讲章：</span>
           <span className="text-slate-500">点击自动填充</span>
         </div>
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
           {ALL_SAMPLES.map((sample) => (
             <button
               key={sample.id}
               onClick={() => handleSelectSample(sample)}
-              className="flex flex-col text-left p-2.5 sm:p-3 rounded-xl bg-slate-900 border border-slate-800 hover:border-blue-500/50 hover:bg-slate-850 transition-all group"
+              className="flex flex-col text-left p-3 rounded-xl bg-slate-900 border border-slate-800 hover:border-blue-500/50 hover:bg-slate-850 transition-all group"
             >
               <div className="flex items-center justify-between w-full">
-                <span className="text-xs font-semibold text-slate-200 group-hover:text-blue-400 transition-colors">
-                  {sample.title.split('：')[0]}
+                <span className="text-xs sm:text-sm font-semibold text-slate-200 group-hover:text-blue-400 transition-colors">
+                  {sample.title}
                 </span>
-                <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-slate-800 text-slate-400">
-                  {sample.wordCount} 字
+                <span className="text-[10px] sm:text-xs font-mono px-2 py-0.5 rounded bg-blue-500/10 text-blue-400 border border-blue-500/20 shrink-0 ml-2">
+                  {sample.estMinutes}
                 </span>
               </div>
-              <p className="text-[11px] text-slate-400 line-clamp-1 sm:line-clamp-2 mt-1">
+              <p className="text-[11px] sm:text-xs text-slate-400 line-clamp-2 mt-1.5 leading-relaxed">
                 {sample.description}
               </p>
             </button>
@@ -135,7 +138,8 @@ export const EditorView: React.FC<EditorViewProps> = ({
             <div className="flex items-center space-x-1.5">
               <span className="w-1.5 h-1.5 rounded-full bg-blue-500 shrink-0 hidden sm:inline-block" />
               <span className="text-[11px] sm:text-sm text-slate-400">
-                约 <strong className="text-white font-mono">{estMinutes}</strong> 分钟
+                主日讲时：约 <strong className="text-white font-mono">{estMinutes}</strong> 分钟
+                <span className="text-slate-500 text-[10px] sm:text-xs ml-1 font-mono">({minMinutes}–{maxMinutes} 分)</span>
               </span>
             </div>
           </div>

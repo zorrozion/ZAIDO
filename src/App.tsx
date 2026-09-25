@@ -9,13 +9,13 @@ import { ReaderView } from './components/ReaderView';
 import { StatusBar } from './components/StatusBar';
 import { ControlBar } from './components/ControlBar';
 import { DebugPanel } from './components/DebugPanel';
-import { SAMPLE_SERMON_1K } from './sampleData/sermons';
+import { SAMPLE_SERMON_SHORT } from './sampleData/sermons';
 import { MatchResult, TrackingStatus } from './types/speech';
 
 export const App: React.FC = () => {
   // 模式切换：'edit' (讲稿输入) | 'read' (提词跟读)
   const [viewMode, setViewMode] = useState<'edit' | 'read'>('edit');
-  const [rawText, setRawText] = useState(SAMPLE_SERMON_1K.content);
+  const [rawText, setRawText] = useState(SAMPLE_SERMON_SHORT.content);
 
   // 解析后的结构化讲稿对象
   const script = useMemo(() => parseScript(rawText), [rawText]);
