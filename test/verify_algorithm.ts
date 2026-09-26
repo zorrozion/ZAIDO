@@ -123,6 +123,42 @@ for (let i = 0; i < parsedFull.sentences.length; i++) {
 console.log(`- 真实主日全篇 (${parsedFull.totalSentences} 句) 遍历推进次数: ${forwardSteps}, 最终落点: ${simulatedCur}`);
 assert(simulatedCur >= parsedFull.totalSentences - 2, '7,600+ 字完整主日讲道超长文本能够完整稳定跟读至文末');
 
+console.log('\n=== TEST SUITE 8: Markdown 富文本解析与语音跟随兼容性测试 ===');
+import { renderSentenceContent } from '../src/utils/renderMarkdown.tsx';
+
+const markdownSample = `
+# 以弗所书讲章
+## 一、今天社会灵的观念
+在今天的中国社会里，**好奇、恐惧和迷信灵的力量**，就一定会充满你。
+我们是基督徒，我们相信：
+- 我们相信独一上帝
+- 我们相信魔鬼的真实性
+- 我们相信**圣灵**
+`;
+
+const parsedMd = parseScript(markdownSample);
+console.log(`- Markdown 讲稿解析完成: ${parsedMd.totalSentences} 句, ${parsedMd.totalParagraphs} 段`);
+assert(parsedMd.totalSentences >= 5, 'Markdown 文稿句子切分正常');
+
+// 验证 cleanText 纯净无 md 标记，保障语音算法精准识别
+const boldSentence = parsedMd.sentences.find(s => s.rawText.includes('**好奇'));
+assert(Boolean(boldSentence), '成功找到包含粗体的句子');
+assert(!boldSentence!.cleanText.includes('*'), '粗体符号 ** 已被正规化过滤，保障语音纯净匹配');
+assert(boldSentence!.cleanText.includes('好奇恐惧和迷信灵的力量'), '加粗文字内容完整保留在 cleanText 中');
+
+// 验证富文本渲染能够正确生成
+const renderedHeading = renderSentenceContent('# 以弗所书讲章', 0);
+assert(Boolean(renderedHeading), '标题渲染生成成功');
+
+const renderedBold = renderSentenceContent('我们相信**圣灵**与*十字架*的救赎。', 1);
+assert(Boolean(renderedBold), '行内粗体与斜体渲染生成成功');
+
+// 模拟语音读到加粗句
+const mdMatcher = new VoiceFollowMatcher(0);
+const mdDecision = mdMatcher.processStep('好奇恐惧和迷信灵的力量就一定会充满你', parsedMd.sentences);
+assert(mdDecision.result.candidateIndex === boldSentence!.globalIndex, '口播实际文字能够精准命中 Markdown 加粗句');
+
 console.log('\n=========================================');
-console.log('🎉 全部 7 组核心算法与状态机测试百分之百通过！');
+console.log('🎉 全部 8 组核心算法与状态机测试百分之百通过！');
 console.log('=========================================');
+

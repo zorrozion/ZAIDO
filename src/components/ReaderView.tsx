@@ -1,5 +1,6 @@
 import { forwardRef } from 'react';
 import { ScriptModel, SentenceItem } from '../types/speech';
+import { renderSentenceContent } from '../utils/renderMarkdown';
 
 interface ReaderViewProps {
   script: ScriptModel;
@@ -77,7 +78,7 @@ export const ReaderView = forwardRef<HTMLDivElement, ReaderViewProps>(({
                       className={sentenceClass}
                       title={`点击跳转至此句 (第 ${sentence.globalIndex + 1} 句)`}
                     >
-                      {sentence.rawText}
+                      {renderSentenceContent(sentence.rawText, sentence.globalIndex)}
                     </span>
                   );
                 })}

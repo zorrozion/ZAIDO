@@ -26,8 +26,17 @@ function splitLongSentence(rawSentence: string): string[] {
     buffer += parts[i];
     // 遇到逗号且长度已达阈值，或 buffer 已经很长
     if ((parts[i] === '，' || parts[i] === ',') && buffer.length >= 20) {
-      result.push(buffer);
-      buffer = '';
+      // 检查 buffer 中的 markdown 标记是否闭合，避免把 **加粗内容，继续加粗** 从中间切断
+      const countBold = (buffer.match(/\*\*/g) || []).length;
+      const countUnder = (buffer.match(/__/g) || []).length;
+      const countItalic = (buffer.match(/(?<!\*)\*(?!\*)/g) || []).length;
+      const isUnbalanced = (countBold % 2 !== 0) || (countUnder % 2 !== 0) || (countItalic % 2 !== 0);
+
+      // 如果正好处于加粗/斜体中间，先不要在此逗号处切断，等待闭合后再切（除非已超长 >= 40）
+      if (!isUnbalanced || buffer.length >= 40) {
+        result.push(buffer);
+        buffer = '';
+      }
     }
   }
 
@@ -67,8 +76,19 @@ export function parseScript(rawText: string): ScriptModel {
 
   for (let pIdx = 0; pIdx < rawParagraphs.length; pIdx++) {
     const pText = rawParagraphs[pIdx];
-    // 匹配常规句子
-    const rawMatches = pText.match(SENTENCE_END_REGEX) || [pText];
+    // 按行处理：优先识别 Markdown 块级行（标题、列表、引用），普通行按标点断句
+    const lines = pText.split('\n').map(l => l.trim()).filter(l => l.length > 0);
+    const rawMatches: string[] = [];
+    for (const line of lines) {
+      if (/^(#{1,6}|>|[-*]|\d+\.)\s+/.test(line)) {
+        rawMatches.push(line);
+      } else {
+        const lineSentences = line.match(SENTENCE_END_REGEX) || [line];
+        for (const ls of lineSentences) {
+          if (ls.trim()) rawMatches.push(ls.trim());
+        }
+      }
+    }
     const paraSentences: SentenceItem[] = [];
     const paraStartIndex = globalSentenceIndex;
 
