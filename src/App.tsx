@@ -9,7 +9,7 @@ import { ReaderView } from './components/ReaderView';
 import { StatusBar } from './components/StatusBar';
 import { ControlBar } from './components/ControlBar';
 import { DebugPanel } from './components/DebugPanel';
-import { SAMPLE_SERMON_SHORT } from './sampleData/sermons';
+import { SAMPLE_SERMON_PSALM_18 } from './sampleData/sermons';
 import { MatchResult, TrackingStatus } from './types/speech';
 
 // 检测是否为移动端设备（手机或 iPad/平板触控屏）
@@ -21,7 +21,7 @@ const isMobileDevice = () => {
 export const App: React.FC = () => {
   // 模式切换：'edit' (讲稿输入) | 'read' (提词跟读)
   const [viewMode, setViewMode] = useState<'edit' | 'read'>('edit');
-  const [rawText, setRawText] = useState(SAMPLE_SERMON_SHORT.content);
+  const [rawText, setRawText] = useState(SAMPLE_SERMON_PSALM_18.content);
 
   // 解析后的结构化讲稿对象
   const script = useMemo(() => parseScript(rawText), [rawText]);

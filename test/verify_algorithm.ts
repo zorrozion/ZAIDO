@@ -2,7 +2,7 @@ import { parseScript } from '../src/utils/splitText.ts';
 import { normalizeText, cleanSpeechWithFillerDiscount } from '../src/utils/normalizeText.ts';
 import { scoreCandidateSentence } from '../src/utils/similarity.ts';
 import { VoiceFollowMatcher } from '../src/utils/matcher.ts';
-import { SAMPLE_SERMON_SHORT, SAMPLE_SERMON_FULL } from '../src/sampleData/sermons.ts';
+import { SAMPLE_SERMON_PSALM_18, SAMPLE_SERMON_SHORT, SAMPLE_SERMON_FULL } from '../src/sampleData/sermons.ts';
 
 function assert(condition: boolean, msg: string) {
   if (!condition) {
@@ -20,13 +20,18 @@ assert(norm1.includes('随己意行做万事'), '核心文字得以保留');
 const cleanedDiscount = cleanSpeechWithFillerDiscount('那个弟兄姊妹然后啊我们来看一下嗯');
 assert(!cleanedDiscount.includes('啊') && !cleanedDiscount.includes('嗯'), '语气词已折减');
 
+const parsedPsalm18 = parseScript(SAMPLE_SERMON_PSALM_18.content);
+console.log(`- 诗篇18篇 (测试 A·第一优先) 解析完成: ${parsedPsalm18.totalSentences} 句, ${parsedPsalm18.totalParagraphs} 段, ${parsedPsalm18.totalChars} 字`);
+assert(parsedPsalm18.totalSentences >= 400, '诗篇18篇句子切分正常 (400+ 句)');
+assert(parsedPsalm18.totalChars >= 9000, '诗篇18篇字数符合真实讲章规格 (9,000+ 字)');
+
 const parsedShort = parseScript(SAMPLE_SERMON_SHORT.content);
-console.log(`- 精简篇 (测试 A) 解析完成: ${parsedShort.totalSentences} 句, ${parsedShort.totalParagraphs} 段, ${parsedShort.totalChars} 字`);
+console.log(`- 精简篇 (测试 B) 解析完成: ${parsedShort.totalSentences} 句, ${parsedShort.totalParagraphs} 段, ${parsedShort.totalChars} 字`);
 assert(parsedShort.totalSentences >= 25, '精简篇句子切分正常');
 assert(parsedShort.totalChars >= 2500, '精简篇字数符合真实讲章规格 (2,800+ 字)');
 
 const parsedFull = parseScript(SAMPLE_SERMON_FULL.content);
-console.log(`- 主日全篇 (测试 B) 解析完成: ${parsedFull.totalSentences} 句, ${parsedFull.totalParagraphs} 段, ${parsedFull.totalChars} 字`);
+console.log(`- 主日全篇 (测试 C) 解析完成: ${parsedFull.totalSentences} 句, ${parsedFull.totalParagraphs} 段, ${parsedFull.totalChars} 字`);
 assert(parsedFull.totalSentences >= 80, '主日全篇句子切分正常');
 assert(parsedFull.totalChars >= 7000, '主日全篇字数符合完整讲道规格 (7,600+ 字)');
 

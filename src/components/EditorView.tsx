@@ -72,7 +72,7 @@ export const EditorView: React.FC<EditorViewProps> = ({
           <span className="font-medium">一键载入真实测试讲章：</span>
           <span className="text-slate-500">点击自动填充</span>
         </div>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-2.5">
           {ALL_SAMPLES.map((sample) => (
             <button
               key={sample.id}
